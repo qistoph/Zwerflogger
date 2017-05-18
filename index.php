@@ -143,7 +143,7 @@ function get_visits() {
 		throw new Exception("get_visits requires logged in team");
 	}
 
-	$stmt = $db->prepare('SELECT beaconid, tag, moment FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE team = :teamid ORDER BY moment DESC');
+	$stmt = $db->prepare('SELECT beaconid, tag, moment, score FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE team = :teamid ORDER BY moment DESC');
 	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
 	$result = $stmt->execute();
 
@@ -161,12 +161,34 @@ function print_visits() {
 	foreach(get_visits() as $visit) {
 		$date = date_create_from_format('Y-m-d H:i:s', $visit['moment'], new DateTimeZone("UTC"));
 		$age = $date->diff(new DateTime());
-		printf("<li>%s (%s)</li>",
+		printf("<li>%s (%s) - %d point(s)</li>",
 			$visit['tag'],
-			format_interval($age));
+			format_interval($age),
+			$visit['score']);
 	}
 
 	print "</ul>";
+}
+
+function print_ranking() {
+	print "<ol>";
+
+	global $db;
+
+	$stmt = $db->prepare('SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score FROM teams LEFT JOIN visits ON teams.teamid = visits.team LEFT JOIN beacons ON beacons.beaconid = visits.beacon GROUP BY teams.name ORDER BY COUNT(*) DESC');
+	$result = $stmt->execute();
+
+	while(($rank = $result->fetchArray()) !== FALSE) {
+		$class = '';
+
+		if($rank['teamid'] == $_SESSION['teamid']) {
+			$class = 'class="myteam"';
+		}
+
+		printf("<li %s>%s (%d)</li>", $class, $rank['name'], $rank['score']);
+	}
+
+	print "</ol>";
 }
 
 if(isset($_GET['teamid'])) {
@@ -196,10 +218,27 @@ if(isset($_GET['beacon'])) {
 	}
 }
 
-function render_content() {
+?>
+<!doctype html>
+<html>
+<head>
+	<title>CyberZwerftoch - Welcome</title>
+
+	<link rel="stylesheet" href="zwerfstyle.css">
+</head>
+<body>
+<?php
 	if(isset($_SESSION['teamid'])) {
 		printf("Welcome %s<br>", $_SESSION['teamname']);
-		print_visits();
+?>
+
+<b>Your visits:</b>
+<?php print_visits(); ?>
+
+<b>Rankings:</b>
+<?php print_ranking(); ?>
+
+<?php
 	} else {
 ?>
 <form method="GET">
@@ -213,16 +252,6 @@ function render_content() {
 </form>
 <?php
 	}
-}
-?>
-<!doctype html>
-<html>
-<head>
-	<title>CyberZwerftoch - Welcome</title>
-</head>
-<body>
-<?php
-render_content();
 ?>
 </body>
 </html>
@@ -233,7 +262,8 @@ Data base creation:
 
 CREATE TABLE beacons (
 	beaconid CHAR(32) PRIMARY KEY COLLATE NOCASE,
-	tag VARCHAR(50)
+	tag VARCHAR(50),
+	score INT NOT NULL DEFAULT 1)
 );
 
 CREATE TABLE teams (
@@ -257,6 +287,9 @@ INSERT INTO teams VALUES(lower(hex(randomblob(16))), 'Team Unicorn');
 
 # View visits per team
 SELECT name, COUNT(*) FROM teams LEFT JOIN visits ON teams.teamid = visits.team GROUP BY teams.name ORDER BY COUNT(*) DESC;
+
+# View score per team
+SELECT name, IFNULL(SUM(beacons.score), 0) FROM teams LEFT JOIN visits ON teams.teamid = visits.team LEFT JOIN beacons ON beacons.beaconid = visits.beacon GROUP BY teams.name ORDER BY COUNT(*) DESC;
 
 # View visits (team, beacon, moment) chronologically
 SELECT teams.name, beacons.tag, visits.moment FROM visits LEFT JOIN teams ON teams.teamid = visits.team LEFT JOIN beacons ON beacons.beaconid = visits.beacon ORDER BY visits.moment ASC;

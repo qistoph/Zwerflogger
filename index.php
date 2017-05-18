@@ -1,0 +1,264 @@
+<?php
+session_start();
+//phpinfo();
+
+$db = new SQLite3('zwerftocht.db', SQLITE3_OPEN_READWRITE);
+
+function is_logged_in() {
+	return isset($_SESSION['teamid']);
+}
+
+function logout() {
+	// Remove all current session variables and login cookie
+	session_unset();
+
+	setcookie(
+		/*name:  */ 'teamid',
+		/*value: */ null,
+		/*expire: */ -1 // Expired
+	);
+}
+
+function login($teamid, &$error_msg ) {
+	global $db;
+
+	logout();
+
+	// Check input format
+	if(preg_match('/^[0-9A-F-]{32}$/i', $teamid) === 0) {
+		$error_msg = "Invalid TeamID.";
+		return false;
+	}
+
+	$stmt = $db->prepare('SELECT teamid, name FROM teams WHERE teamid = :teamid');
+	$stmt->bindValue(':teamid', $teamid, SQLITE3_TEXT);
+	$result = $stmt->execute();
+	$team = $result->fetchArray();
+
+	// Check team id is in database
+	if($team === FALSE) {
+		$error_msg = "Invalid TeamID (1).";
+		return false;
+	}
+
+	// Make sure the team id entered matches the one returned from DB (safety check)
+	if(strcasecmp($team['teamid'], $teamid)) {
+		$error_msg = "Invalid TeamID (2).";
+		return false;
+	}
+
+	if(!setcookie(
+		/*name:  */ 'teamid',
+		/*value: */ $team['teamid'],
+		/*expire: */ time() + 60*60*24*1, // 1 day
+		/*path:  */ '', // Use default: current directory
+		/*domain: */ '', // Use default: current domain
+		/*secure: */ false, // Set to false if hosted on HTTP
+		/*httponly: */ true
+	)) {
+		$error_msg = "Unable to set cookie.";
+		return false;
+	}
+
+	// Set the session variables
+	$_SESSION['teamid'] = $team['teamid'];
+	$_SESSION['teamname'] = $team['name'];
+	$_SESSION['logintime'] = time();
+	return true;
+}
+
+function check_beacon($beaconid, &$error_msg) {
+	global $db;
+
+	// Checking a beacon requires a valid login
+	if(!is_logged_in()) {
+		throw new Exception("check_beacon requires logged in team");
+	}
+
+	// Check input format
+	if(preg_match('/^[0-9A-F-]{32}$/i', $beaconid) === 0) {
+		$error_msg = "Invalid beacon";
+		return false;
+	}
+	
+	$stmt = $db->prepare('SELECT beaconid, tag FROM beacons WHERE beaconid LIKE :beaconid');
+	$stmt->bindValue(':beaconid', $beaconid, SQLITE3_TEXT);
+	$result = $stmt->execute();
+	$beacon = $result->fetchArray();
+
+	// Check beacon id is in database
+	if($beacon === FALSE) {
+		$error_msg = "Invalid beacon. (1)";
+		return false;
+	}
+
+	// Make sure the beacon id entered matches the on returned from DB (safety check)
+	if(strcasecmp($beacon['beaconid'], $beaconid)) {
+		$error_msg = "Invalid beacon. (2)";
+		return false;
+	}
+
+	$stmt = $db->prepare('SELECT team, beacon FROM visits WHERE team = :teamid AND beacon LIKE :beaconid');
+	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
+	$stmt->bindValue(':beaconid', $beaconid, SQLITE3_TEXT);
+	$result = $stmt->execute();
+	$visit = $result->fetchArray();
+
+	// Check if the beacon was already visited by this team
+	if($visit !== FALSE) {
+		$error_msg = sprintf("You have visited beacon %s already.", $beacon['tag']);
+		return false;
+	}
+
+	// Register the visit (prefer lower-case storing, though everything should work case insensitive)
+	$stmt = $db->prepare('INSERT INTO visits (team, beacon, moment) VALUES(LOWER(:teamid), LOWER(:beaconid), CURRENT_TIMESTAMP)');
+	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
+	$stmt->bindValue(':beaconid', $beaconid, SQLITE3_TEXT);
+	$result = $stmt->execute();
+
+	if($result === FALSE) {
+		$error_msg = "Visit not record.";
+		return false;
+	}
+
+	return true;
+}
+
+function format_interval(DateInterval $interval) {
+	$result = "";
+	if ($interval->y) { return $interval->format("%y years ago"); }
+	if ($interval->m) { return $interval->format("%m months ago"); }
+	if ($interval->d) { return $interval->format("%d days ago"); }
+	if ($interval->h) { return $interval->format("%h hours ago"); }
+	if ($interval->i) { return $interval->format("%i minutes ago"); }
+	if ($interval->s) { return $interval->format("%s seconds ago"); }
+
+	return "now";
+}
+
+function get_visits() {
+	global $db;
+
+	if(!is_logged_in()) {
+		throw new Exception("get_visits requires logged in team");
+	}
+
+	$stmt = $db->prepare('SELECT beaconid, tag, moment FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE team = :teamid ORDER BY moment DESC');
+	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
+	$result = $stmt->execute();
+
+	$visits = [];
+	while(($visit = $result->fetchArray()) !== FALSE) {
+		$visits[] = $visit;
+	}
+
+	return $visits;
+}
+
+function print_visits() {
+	print "<ul>";
+
+	foreach(get_visits() as $visit) {
+		$date = date_create_from_format('Y-m-d H:i:s', $visit['moment'], new DateTimeZone("UTC"));
+		$age = $date->diff(new DateTime());
+		printf("<li>%s (%s)</li>",
+			$visit['tag'],
+			format_interval($age));
+	}
+
+	print "</ul>";
+}
+
+if(isset($_GET['teamid'])) {
+	$teamid = $_GET['teamid'];
+	if(!login($teamid, $login_error)) {
+		print "Login failed: $login_error<br>";
+	}
+} elseif(!isset($_SESSION['teamid'])) {
+	if(isset($_COOKIE['teamid'])) {
+		if(!login($_COOKIE['teamid'], $login_error)) {
+			print "Could not login from cookie: $login_error<br>";
+		}
+	}
+}
+
+if(isset($_GET['beacon'])) {
+	$beaconid = $_GET['beacon'];
+
+	if(!is_logged_in()) {
+		print "Login first";
+	} else {
+		if(!check_beacon($beaconid, $beacon_error)) {
+			print "Beacon failed: $beacon_error<br>";
+		} else {
+			printf("Congratulations. You have visted the beacon, %s<br>", $_SESSION['teamname']);
+		}
+	}
+}
+
+function render_content() {
+	if(isset($_SESSION['teamid'])) {
+		printf("Welcome %s<br>", $_SESSION['teamname']);
+		print_visits();
+	} else {
+?>
+<form method="GET">
+<?php
+		if(isset($_GET['beacon'])) {
+			printf("<input type=\"hidden\" name=\"beacon\" value=\"%s\">", htmlspecialchars($_GET['beacon']));
+		}
+?>
+	<label for="teamid">Team ID:</label><input type="text" name="teamid" id="teamid"><br>
+	<input type="submit" value="Login">
+</form>
+<?php
+	}
+}
+?>
+<!doctype html>
+<html>
+<head>
+	<title>CyberZwerftoch - Welcome</title>
+</head>
+<body>
+<?php
+render_content();
+?>
+</body>
+</html>
+
+<?php
+/*
+Data base creation:
+
+CREATE TABLE beacons (
+	beaconid CHAR(32) PRIMARY KEY COLLATE NOCASE,
+	tag VARCHAR(50)
+);
+
+CREATE TABLE teams (
+	teamid CHAR(32) PRIMARY KEY COLLATE NOCASE,
+	name VARCHAR(50)
+);
+
+CREATE TABLE visits (
+	team CHAR(32) COLLATE NOCASE,
+	beacon CHAR(32) COLLATE NOCASE,
+	moment TIMESTAMP
+);
+
+Sample queries:
+
+# Insert beacon 
+INSERT INTO beacons VALUES(lower(hex(randomblob(16))), 'First');
+
+# Insert team:
+INSERT INTO teams VALUES(lower(hex(randomblob(16))), 'Team Unicorn');
+
+# View visits per team
+SELECT name, COUNT(*) FROM teams LEFT JOIN visits ON teams.teamid = visits.team GROUP BY teams.name ORDER BY COUNT(*) DESC;
+
+# View visits (team, beacon, moment) chronologically
+SELECT teams.name, beacons.tag, visits.moment FROM visits LEFT JOIN teams ON teams.teamid = visits.team LEFT JOIN beacons ON beacons.beaconid = visits.beacon ORDER BY visits.moment ASC;
+
+*/

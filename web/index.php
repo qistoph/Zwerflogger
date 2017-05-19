@@ -167,23 +167,27 @@ function get_visits() {
 }
 
 function print_visits() {
-	print "<ul>";
+	print '<table style="margin:0px auto; width:500px">
+				<tr>
+					<th>Tag</th>
+					<th>Time</th>
+					<th>Score</th>
+				</tr>';
+
 
 	foreach(get_visits() as $visit) {
 		$date = date_create_from_format('Y-m-d H:i:s', $visit['moment'], new DateTimeZone("UTC"));
 		$age = $date->diff(new DateTime());
-		printf("<li>%s (%s) - %d point(s)</li>",
+		printf("<tr><td>%s</td><td>%s</td><td>%d</td></tr>",
 			$visit['tag'],
 			format_interval($age),
 			$visit['score']);
 	}
 
-	print "</ul>";
+	print "</table>";
 }
 
 function print_ranking() {
-	print "<ol>";
-
 	global $db;
 
 	$stmt = $db->prepare('
@@ -213,6 +217,16 @@ function print_ranking() {
 		ORDER BY COUNT(*) DESC;');
 	$result = $stmt->execute();
 
+	print '<table style="margin:0px auto; width:500px">
+				<tr>
+					<th>Rank</th>
+					<th>Team</th>
+					<th>Score</th>
+					<th>Start time</th>
+					<th>Last beacon</th>
+				</tr>';
+
+	$rankNr = 1;
 	while(($rank = $result->fetchArray()) !== FALSE) {
 		$class = '';
 
@@ -220,10 +234,12 @@ function print_ranking() {
 			$class = 'class="myteam"';
 		}
 
-		printf("<li %s>%s (%d - %s - %s)</li>", $class, $rank['name'], $rank['score'], $rank['logintime'], $rank['lastbeacon']);
+		printf("<tr %s><td>%d.</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>", $class, $rankNr, $rank['name'], $rank['score'], $rank['logintime'], $rank['lastbeacon']);
+
+		$rankNr++;
 	}
 
-	print "</ol>";
+	print '</table>';
 }
 
 if(isset($_GET['teamid'])) {
@@ -253,27 +269,47 @@ if(isset($_GET['beacon'])) {
 ?>
 <!doctype html>
 <html>
-<head>
-	<title>CyberZwerftoch - Welcome</title>
+<head lang="en">
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+	<title>Cyberzwerftocht 2017</title>
 
 	<link rel="stylesheet" href="zwerfstyle.css">
 </head>
 <body>
+	<div class="container" align="center">
+		<div class="row">
+			<h1>Cyberzwerftocht 2017</h1>
+		</div>
 <?php
 if(isset($login_error)) {
-	print "Login failed: $login_error<br>";
+	printf('<div class="row">Login failed: %s</div>', $login_error);
 }
 
 if(isset($beacon_error)) {
-	print "Beacon visit registration failed: $beacon_error<br>";
+	printf('<div class="row">Beacon visit registration failed: %s</div>', $beacon_error);
 }
 
 if(isset($beacon_visited)) {
-	print "Congratualations, you have visited the beacon <b>$beacon_visited</b><br>";
+	printf('<div class="row">Congratualations, you have visited the beacon <b>%s</b></div>', $beacon_visited);
 }
 ?>
-<b>Rankings:</b>
-<?php print_ranking(); ?>
+		<div class="row">
+			<b>Rankings:</b>
+			<?php print_ranking(); ?>
+		</div>
 
 <?php
 	if(isset($_SESSION['teamid'])) {

@@ -5,8 +5,8 @@
 include('../config.php');
 include(Config::$qrlib_path);
 
-if(isset($_REQUEST['beacon'])) {
-	$qrurl = Config::$QR_baseURL . $_REQUEST['beacon'];
+if(isset($_REQUEST['field']) && isset($_REQUEST['value'])) {
+	$qrurl = sprintf('%s?%s=%s', Config::$QR_baseURL, urlencode($_REQUEST['field']), urlencode($_REQUEST['value']));
 	QRcode::png($qrurl, false, Config::$QR_eclevel, Config::$QR_pixel_size, Config::$QR_margin);
 	exit;
 }
@@ -48,13 +48,23 @@ if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != Config::$hide_secret) {
 	</style>
 </head>
 <body>
+<h1>Teams</h1>
 <?php
 $db = new SQLite3('../zwerfdata.db', SQLITE3_OPEN_READWRITE);
 
+$stmt = $db->prepare('SELECT teamid, name FROM teams');
+$result = $stmt->execute();
+while(($team = $result->fetchArray()) !== FALSE) {
+	printf('<div class="card"><h1>%s</h1><img src="qr.php?field=teamid&value=%s"></div>', $team['name'], $team['teamid']);
+}
+
+?>
+<h1>Beacons</h1>
+<?php
 $stmt = $db->prepare('SELECT beaconid, tag FROM beacons');
 $result = $stmt->execute();
 while(($beacon = $result->fetchArray()) !== FALSE) {
-	printf('<div class="card"><h1>Cyber Zwerftocht</h1><img src="qr.php?beacon=%s"><br>%s</div>', $beacon['beaconid'], $beacon['tag']);
+	printf('<div class="card"><h1>Cyber Zwerftocht</h1><img src="qr.php?field=beacon&value=%s"><br>%s</div>', $beacon['beaconid'], $beacon['tag']);
 }
 ?>
 </body>

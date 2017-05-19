@@ -190,7 +190,7 @@ function print_ranking() {
 	while(($rank = $result->fetchArray()) !== FALSE) {
 		$class = '';
 
-		if($rank['teamid'] == $_SESSION['teamid']) {
+		if(isset($_SESSION['teamid']) && $rank['teamid'] == $_SESSION['teamid']) {
 			$class = 'class="myteam"';
 		}
 
@@ -239,6 +239,9 @@ if(isset($_GET['beacon'])) {
 	<link rel="stylesheet" href="zwerfstyle.css">
 </head>
 <body>
+<b>Rankings:</b>
+<?php print_ranking(); ?>
+
 <?php
 	if(isset($_SESSION['teamid'])) {
 		printf("Welcome %s<br>", $_SESSION['teamname']);
@@ -246,9 +249,6 @@ if(isset($_GET['beacon'])) {
 
 <b>Your visits:</b>
 <?php print_visits(); ?>
-
-<b>Rankings:</b>
-<?php print_ranking(); ?>
 
 <?php
 	} else {

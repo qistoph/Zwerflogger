@@ -56,7 +56,7 @@ if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != $hide_secret) {
 </head>
 <body>
 <?php
-$db = new SQLite3('zwerfdata.db', SQLITE3_OPEN_READWRITE);
+$db = new SQLite3('../zwerfdata.db', SQLITE3_OPEN_READWRITE);
 
 $stmt = $db->prepare('SELECT beaconid, tag FROM beacons');
 $result = $stmt->execute();

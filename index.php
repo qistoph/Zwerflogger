@@ -2,7 +2,7 @@
 session_start();
 //phpinfo();
 
-$db = new SQLite3('zwerfdata.db', SQLITE3_OPEN_READWRITE);
+$db = new SQLite3('../zwerfdata.db', SQLITE3_OPEN_READWRITE);
 
 function is_logged_in() {
 	return isset($_SESSION['teamid']);

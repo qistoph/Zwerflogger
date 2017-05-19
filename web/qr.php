@@ -2,23 +2,16 @@
 // Requires phpqrcode (Debian: apt-get install phpqrcode)
 // http://phpqrcode.sourceforge.net/
 
-include "/usr/share/phpqrcode/qrlib.php";
-//include "lib/phpqrcode/qrlib.php";
-
-$hide_secret = '4605cd88b10f9a812015'; // Use your own random secret here
-$eclevel = QR_ECLEVEL_L; // _L, _M, _Q, _H
-$pixel_size = 4;
-$margin = 2;
-// Feel free to adjust, e.g. when using a proxy or non-default port
-$baseURL = sprintf('%s://%s%s/?beacon=', $_SERVER['HTTPS'] == 'on' ? 'https' : 'http', $_SERVER['HTTP_HOST'], dirname($_SERVER['REQUEST_URI']));
+include('../config.php');
+include(Config::$qrlib_path);
 
 if(isset($_REQUEST['beacon'])) {
-	$qrurl = $baseURL . $_REQUEST['beacon'];
-	QRcode::png($qrurl, false, QR_ECLEVEL_L, $pixel_size, $margin);
+	$qrurl = Config::$QR_baseURL . $_REQUEST['beacon'];
+	QRcode::png($qrurl, false, Config::$QR_eclevel, Config::$QR_pixel_size, Config::$QR_margin);
 	exit;
 }
 
-if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != $hide_secret) {
+if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != Config::$hide_secret) {
 	exit;
 }
 

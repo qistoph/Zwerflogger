@@ -1,10 +1,9 @@
 <?php
-include('config.php');
-session_name(dirname($_SERVER['REQUEST_URI'])); // Session per instance
+include('../config.php');
+session_name(Config::$session_name); // Session per instance
 session_start();
-//phpinfo();
 
-$db = new SQLite3('../zwerfdata.db', SQLITE3_OPEN_READWRITE);
+$db = new SQLite3(Config::$db_file, SQLITE3_OPEN_READWRITE);
 
 function is_logged_in() {
 	return isset($_SESSION['teamid']);
@@ -55,7 +54,7 @@ function login($teamid, &$error_msg ) {
 		/*expire: */ time() + 60*60*24*1, // 1 day
 		/*path:  */ '', // Use default: current directory
 		/*domain: */ '', // Use default: current domain
-		/*secure: */ false, // Set to false if hosted on HTTP
+		/*secure: */ Config::$secure_cookies, // Set to false if hosted on HTTP
 		/*httponly: */ true
 	)) {
 		$error_msg = "Unable to set cookie.";

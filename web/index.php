@@ -185,11 +185,28 @@ function print_ranking() {
 	global $db;
 
 	$stmt = $db->prepare('
-		SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, MIN(logins.moment) AS logintime
+		SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, firstLogins.moment AS logintime, lastVisits.tag AS lastbeacon
 		FROM teams
 		LEFT JOIN visits ON teams.teamid = visits.team
 		LEFT JOIN beacons ON beacons.beaconid = visits.beacon
-		LEFT JOIN logins ON logins.team = teams.teamid
+		LEFT JOIN (
+		  SELECT loginsL.team, loginsL.moment
+		  FROM logins loginsL
+		  LEFT JOIN logins loginsR
+			ON loginsL.team = loginsR.team
+			AND loginsL.moment > loginsR.moment
+		  WHERE loginsR.team IS NULL
+		) firstLogins ON firstLogins.team = teams.teamid
+		LEFT JOIN (
+		  SELECT visitsL.team, beacons.tag
+		  FROM visits visitsL
+		  LEFT JOIN visits visitsR
+			ON visitsL.team = visitsR.team
+			AND visitsL.moment < visitsR.moment
+		  LEFT JOIN beacons
+			ON visitsL.beacon = beacons.beaconid
+		  WHERE visitsR.team is NULL
+		) lastVisits ON lastVisits.team = teams.teamid
 		GROUP BY teams.name
 		ORDER BY COUNT(*) DESC;');
 	$result = $stmt->execute();
@@ -201,7 +218,7 @@ function print_ranking() {
 			$class = 'class="myteam"';
 		}
 
-		printf("<li %s>%s (%d - %s)</li>", $class, $rank['name'], $rank['score'], $rank['logintime']);
+		printf("<li %s>%s (%d - %s - %s)</li>", $class, $rank['name'], $rank['score'], $rank['logintime'], $rank['lastbeacon']);
 	}
 
 	print "</ol>";
@@ -295,24 +312,60 @@ SELECT name, IFNULL(SUM(beacons.score), 0) FROM teams LEFT JOIN visits ON teams.
 SELECT teams.name, beacons.tag, visits.moment FROM visits LEFT JOIN teams ON teams.teamid = visits.team LEFT JOIN beacons ON beacons.beaconid = visits.beacon ORDER BY visits.moment ASC;
 
 # Ranking with first login from logins
-SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, MIN(logins.moment)
-FROM teams
-LEFT JOIN visits ON teams.teamid = visits.team
-LEFT JOIN beacons ON beacons.beaconid = visits.beacon
-LEFT JOIN logins ON logins.team = teams.teamid
-GROUP BY teams.name
-ORDER BY COUNT(*) DESC;
-
-# Ranking with first login since moment X
-SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, MIN(logins.moment)
+SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, firstLogins.moment
 FROM teams
 LEFT JOIN visits ON teams.teamid = visits.team
 LEFT JOIN beacons ON beacons.beaconid = visits.beacon
 LEFT JOIN (
-	SELECT logins.team, logins.moment
-	FROM logins
-	WHERE logins.moment > '2017-05-19 14:00'
-) logins ON logins.team = teams.teamid
+  SELECT loginsL.team, loginsL.moment
+  FROM logins loginsL
+  LEFT JOIN logins loginsR ON loginsL.team = loginsR.team AND loginsL.moment > loginsR.moment
+  WHERE loginsR.team IS NULL
+) firstLogins ON firstLogins.team = teams.teamid
+GROUP BY teams.name
+ORDER BY COUNT(*) DESC;
+
+# Ranking with first login since moment X
+SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, firstLogins.moment
+FROM teams
+LEFT JOIN visits ON teams.teamid = visits.team
+LEFT JOIN beacons ON beacons.beaconid = visits.beacon
+LEFT JOIN (
+  SELECT loginsL.team, loginsL.moment
+  FROM logins loginsL
+  LEFT JOIN logins loginsR
+    ON loginsL.team = loginsR.team
+    AND loginsL.moment > loginsR.moment
+    AND loginsR.moment > '2017-05-19 13:59'
+  WHERE loginsR.team IS NULL
+  AND loginsL.moment > '2017-05-19 13:59'
+) firstLogins ON firstLogins.team = teams.teamid
+GROUP BY teams.name
+ORDER BY COUNT(*) DESC;
+
+# Ranking with first login and last beacon
+SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, firstLogins.moment, lastVisits.tag
+FROM teams
+LEFT JOIN visits ON teams.teamid = visits.team
+LEFT JOIN beacons ON beacons.beaconid = visits.beacon
+LEFT JOIN (
+  SELECT loginsL.team, loginsL.moment
+  FROM logins loginsL
+  LEFT JOIN logins loginsR
+    ON loginsL.team = loginsR.team
+    AND loginsL.moment > loginsR.moment
+  WHERE loginsR.team IS NULL
+) firstLogins ON firstLogins.team = teams.teamid
+LEFT JOIN (
+  SELECT visitsL.team, beacons.tag
+  FROM visits visitsL
+  LEFT JOIN visits visitsR
+    ON visitsL.team = visitsR.team
+    AND visitsL.moment < visitsR.moment
+  LEFT JOIN beacons
+    ON visitsL.beacon = beacons.beaconid
+  WHERE visitsR.team is NULL
+) lastVisits ON lastVisits.team = teams.teamid
 GROUP BY teams.name
 ORDER BY COUNT(*) DESC;
 

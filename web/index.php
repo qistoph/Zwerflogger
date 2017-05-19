@@ -1,4 +1,6 @@
 <?php
+include('config.php');
+session_name(dirname($_SERVER['REQUEST_URI'])); // Session per instance
 session_start();
 //phpinfo();
 

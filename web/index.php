@@ -270,30 +270,6 @@ if(isset($_GET['beacon'])) {
 
 <?php
 /*
-Data base creation:
-
-CREATE TABLE beacons (
-	beaconid CHAR(32) PRIMARY KEY COLLATE NOCASE,
-	tag VARCHAR(50),
-	score INT NOT NULL DEFAULT 1
-);
-
-CREATE TABLE teams (
-	teamid CHAR(32) PRIMARY KEY COLLATE NOCASE,
-	name VARCHAR(50)
-);
-
-CREATE TABLE visits (
-	team CHAR(32) COLLATE NOCASE,
-	beacon CHAR(32) COLLATE NOCASE,
-	moment TIMESTAMP
-);
-
-CREATE TABLE logins (
-	team CHAR(32) COLLATE NOCASE,
-	moment TIMESTAMP
-);
-
 Sample queries:
 
 # Insert beacon 

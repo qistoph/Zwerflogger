@@ -17,6 +17,7 @@ CREATE TABLE visits (
 
 CREATE TABLE logins (
 	team CHAR(32) COLLATE NOCASE,
-	moment TIMESTAMP
+	moment TIMESTAMP,
+	UNIQUE(team, moment) ON CONFLICT IGNORE
 );
 

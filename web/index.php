@@ -203,7 +203,7 @@ function print_ranking() {
 if(isset($_GET['teamid'])) {
 	$teamid = $_GET['teamid'];
 	if(login($teamid, $login_error)) {
-		header('Location: '.$_SERVER['DOCUMENT_URI']);
+		header('Location: '.explode('?', $_SERVER['REQUEST_URI'])[0]);
 		exit;
 	} else {
 		print "Login failed: $login_error<br>";

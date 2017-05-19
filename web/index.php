@@ -38,13 +38,21 @@ function login($teamid, &$error_msg ) {
 
 	// Check team id is in database
 	if($team === FALSE) {
-		$error_msg = "Invalid TeamID (1).";
+		$error_msg = "Invalid TeamID.";
 		return false;
 	}
 
 	// Make sure the team id entered matches the one returned from DB (safety check)
 	if(strcasecmp($team['teamid'], $teamid)) {
-		$error_msg = "Invalid TeamID (2).";
+		$error_msg = "Invalid TeamID.";
+		return false;
+	}
+
+	$stmt = $db->prepare('INSERT INTO logins (team, moment) VALUES(:teamid, CURRENT_TIMESTAMP)');
+	$stmt->bindValue(':teamid', $teamid, SQLITE3_TEXT);
+	$result = $stmt->execute();
+	if($result === false) {
+		$error_msg = "Failed to register login.";
 		return false;
 	}
 
@@ -89,13 +97,13 @@ function check_beacon($beaconid, &$error_msg) {
 
 	// Check beacon id is in database
 	if($beacon === FALSE) {
-		$error_msg = "Invalid beacon. (1)";
+		$error_msg = "Invalid beacon.";
 		return false;
 	}
 
 	// Make sure the beacon id entered matches the on returned from DB (safety check)
 	if(strcasecmp($beacon['beaconid'], $beaconid)) {
-		$error_msg = "Invalid beacon. (2)";
+		$error_msg = "Invalid beacon.";
 		return false;
 	}
 
@@ -194,7 +202,10 @@ function print_ranking() {
 
 if(isset($_GET['teamid'])) {
 	$teamid = $_GET['teamid'];
-	if(!login($teamid, $login_error)) {
+	if(login($teamid, $login_error)) {
+		header('Location: '.$_SERVER['DOCUMENT_URI']);
+		exit;
+	} else {
 		print "Login failed: $login_error<br>";
 	}
 } elseif(!isset($_SESSION['teamid'])) {
@@ -275,6 +286,11 @@ CREATE TABLE teams (
 CREATE TABLE visits (
 	team CHAR(32) COLLATE NOCASE,
 	beacon CHAR(32) COLLATE NOCASE,
+	moment TIMESTAMP
+);
+
+CREATE TABLE logins (
+	team CHAR(32) COLLATE NOCASE,
 	moment TIMESTAMP
 );
 

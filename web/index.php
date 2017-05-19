@@ -76,7 +76,7 @@ function login($teamid, &$error_msg ) {
 	return true;
 }
 
-function check_beacon($beaconid, &$error_msg) {
+function check_beacon($beaconid, &$beacon_tag, &$error_msg) {
 	global $db;
 
 	// Checking a beacon requires a valid login
@@ -129,6 +129,8 @@ function check_beacon($beaconid, &$error_msg) {
 		$error_msg = "Visit not record.";
 		return false;
 	}
+
+	$beacon_tag = $beacon['tag'];
 
 	return true;
 }
@@ -229,27 +231,21 @@ if(isset($_GET['teamid'])) {
 	if(login($teamid, $login_error)) {
 		header('Location: '.explode('?', $_SERVER['REQUEST_URI'])[0]);
 		exit;
-	} else {
-		print "Login failed: $login_error<br>";
 	}
 } elseif(!isset($_SESSION['teamid'])) {
 	if(isset($_COOKIE['teamid'])) {
 		if(!login($_COOKIE['teamid'], $login_error)) {
-			print "Could not login from cookie: $login_error<br>";
+			$login_error = "Could not login from cookie - $login_error";
 		}
 	}
 }
 
 if(isset($_GET['beacon'])) {
-	$beaconid = $_GET['beacon'];
-
 	if(!is_logged_in()) {
-		print "Login first";
+		$beacon_error = "Login required";
 	} else {
-		if(!check_beacon($beaconid, $beacon_error)) {
-			print "Beacon failed: $beacon_error<br>";
-		} else {
-			printf("Congratulations. You have visted the beacon, %s<br>", $_SESSION['teamname']);
+		if(check_beacon($_GET['beacon'], $beacon_tag, $beacon_error)) {
+			$beacon_visited = $beacon_tag;
 		}
 	}
 }
@@ -263,6 +259,19 @@ if(isset($_GET['beacon'])) {
 	<link rel="stylesheet" href="zwerfstyle.css">
 </head>
 <body>
+<?php
+if(isset($login_error)) {
+	print "Login failed: $login_error<br>";
+}
+
+if(isset($beacon_error)) {
+	print "Beacon visit registration failed: $beacon_error<br>";
+}
+
+if(isset($beacon_visited)) {
+	print "Congratualations, you have visited the beacon <b>$beacon_visited</b><br>";
+}
+?>
 <b>Rankings:</b>
 <?php print_ranking(); ?>
 

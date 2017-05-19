@@ -10,7 +10,7 @@ $eclevel = QR_ECLEVEL_L; // _L, _M, _Q, _H
 $pixel_size = 4;
 $margin = 2;
 // Feel free to adjust, e.g. when using a proxy or non-default port
-$baseURL = sprintf('%s://%s%s/?beacon=', $_SERVER['REQUEST_SCHEME'], $_SERVER['HTTP_HOST'], dirname($_SERVER['REQUEST_URI']));
+$baseURL = sprintf('%s://%s%s/?beacon=', $_SERVER['HTTPS'] == 'on' ? 'https' : 'http', $_SERVER['HTTP_HOST'], dirname($_SERVER['REQUEST_URI']));
 
 if(isset($_REQUEST['beacon'])) {
 	$qrurl = $baseURL . $_REQUEST['beacon'];

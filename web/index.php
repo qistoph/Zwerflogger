@@ -184,7 +184,14 @@ function print_ranking() {
 
 	global $db;
 
-	$stmt = $db->prepare('SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score FROM teams LEFT JOIN visits ON teams.teamid = visits.team LEFT JOIN beacons ON beacons.beaconid = visits.beacon GROUP BY teams.name ORDER BY COUNT(*) DESC');
+	$stmt = $db->prepare('
+		SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, MIN(logins.moment) AS logintime
+		FROM teams
+		LEFT JOIN visits ON teams.teamid = visits.team
+		LEFT JOIN beacons ON beacons.beaconid = visits.beacon
+		LEFT JOIN logins ON logins.team = teams.teamid
+		GROUP BY teams.name
+		ORDER BY COUNT(*) DESC;');
 	$result = $stmt->execute();
 
 	while(($rank = $result->fetchArray()) !== FALSE) {
@@ -194,7 +201,7 @@ function print_ranking() {
 			$class = 'class="myteam"';
 		}
 
-		printf("<li %s>%s (%d)</li>", $class, $rank['name'], $rank['score']);
+		printf("<li %s>%s (%d - %s)</li>", $class, $rank['name'], $rank['score'], $rank['logintime']);
 	}
 
 	print "</ol>";
@@ -286,5 +293,27 @@ SELECT name, IFNULL(SUM(beacons.score), 0) FROM teams LEFT JOIN visits ON teams.
 
 # View visits (team, beacon, moment) chronologically
 SELECT teams.name, beacons.tag, visits.moment FROM visits LEFT JOIN teams ON teams.teamid = visits.team LEFT JOIN beacons ON beacons.beaconid = visits.beacon ORDER BY visits.moment ASC;
+
+# Ranking with first login from logins
+SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, MIN(logins.moment)
+FROM teams
+LEFT JOIN visits ON teams.teamid = visits.team
+LEFT JOIN beacons ON beacons.beaconid = visits.beacon
+LEFT JOIN logins ON logins.team = teams.teamid
+GROUP BY teams.name
+ORDER BY COUNT(*) DESC;
+
+# Ranking with first login since moment X
+SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, MIN(logins.moment)
+FROM teams
+LEFT JOIN visits ON teams.teamid = visits.team
+LEFT JOIN beacons ON beacons.beaconid = visits.beacon
+LEFT JOIN (
+	SELECT logins.team, logins.moment
+	FROM logins
+	WHERE logins.moment > '2017-05-19 14:00'
+) logins ON logins.team = teams.teamid
+GROUP BY teams.name
+ORDER BY COUNT(*) DESC;
 
 */

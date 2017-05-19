@@ -275,7 +275,7 @@ Data base creation:
 CREATE TABLE beacons (
 	beaconid CHAR(32) PRIMARY KEY COLLATE NOCASE,
 	tag VARCHAR(50),
-	score INT NOT NULL DEFAULT 1)
+	score INT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE teams (
@@ -297,7 +297,7 @@ CREATE TABLE logins (
 Sample queries:
 
 # Insert beacon 
-INSERT INTO beacons VALUES(lower(hex(randomblob(16))), 'First');
+INSERT INTO beacons VALUES(lower(hex(randomblob(16))), 'First', 1);
 
 # Insert team:
 INSERT INTO teams VALUES(lower(hex(randomblob(16))), 'Team Unicorn');

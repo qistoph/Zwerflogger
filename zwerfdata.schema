@@ -12,7 +12,9 @@ CREATE TABLE teams (
 CREATE TABLE visits (
 	team CHAR(32) COLLATE NOCASE,
 	beacon CHAR(32) COLLATE NOCASE,
-	moment TIMESTAMP
+	moment TIMESTAMP,
+	UNIQUE(team, beacon) ON CONFLICT IGNORE,
+	UNIQUE(team, moment) ON CONFLICT FAIL
 );
 
 CREATE TABLE logins (

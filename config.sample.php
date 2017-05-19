@@ -15,7 +15,7 @@ class Config {
 		self::$QR_margin = 2;
 
 		// Feel free to adjust, e.g. when using a proxy or non-default port
-		self::$QR_baseURL = sprintf('%s://%s%s/?beacon=',
+		self::$QR_baseURL = sprintf('%s://%s%s/',
 			$_SERVER['HTTPS'] == 'on' ? 'https' : 'http',
 			$_SERVER['HTTP_HOST'],
 			dirname($_SERVER['REQUEST_URI']));

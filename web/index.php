@@ -256,7 +256,11 @@ function print_ranking() {
 	print '</table>';
 }
 
-if(isset($_GET['teamid'])) {
+if(isset($_GET['action'])) {
+	if($_GET['action'] == 'logout') {
+		logout();
+	}
+} elseif(isset($_GET['teamid'])) {
 	$teamid = $_GET['teamid'];
 	if(login($teamid, $login_error)) {
 		header('Location: '.explode('?', $_SERVER['REQUEST_URI'])[0]);
@@ -303,10 +307,21 @@ if(isset($_GET['beacon'])) {
 	<link rel="stylesheet" href="zwerfstyle.css">
 </head>
 <body>
-	<div class="container" align="center">
-		<div class="row">
-			<h1>Cyberzwerftocht 2017</h1>
+	<nav class="navbar navbar-default">
+		<div class="container">
+			<div class="navbar-brand">
+				Cyberzwerftocht 2017
+			</div>
+<?php
+if(is_logged_in()) {
+	print '<form method="GET"><button type="submit" class="btn btn-default navbar-btn navbar-right" name="action" value="logout"><i class="glyphicon glyphicon-log-out"></i></button></form>';
+}
+?>
 		</div>
+	</nav>
+
+	<div class="container" align="center">
+
 <?php
 if(isset($login_error)) {
 	printf('<div class="alert alert-warning"><i class="glyphicon glyphicon-exclamation-sign"></i> Login failed: %s</div>', $login_error);
@@ -344,14 +359,17 @@ if(isset($_SESSION['teamid'])) {
 	} else {
 ?>
 		<div class="row">
-			<form method="GET">
+			<form method="GET" class="form-inline">
 <?php
 		if(isset($_GET['beacon'])) {
 			printf("<input type=\"hidden\" name=\"beacon\" value=\"%s\">", htmlspecialchars($_GET['beacon']));
 		}
 ?>
-				<label for="teamid">Team ID:</label><input type="text" name="teamid" id="teamid"><br>
-				<input type="submit" value="Login">
+				<div class="input-group">
+					<span class="input-group-addon" id="basic-addon1"><i class="glyphicon glyphicon-qrcode" aria-hidden="true"></i></span>
+					<input type="text" class="form-control" name="teamid" placeholder="Team ID">
+				</div>
+				<button type="submit" class="btn btn-primary">Login</button>
 			</form>
 		</div>
 <?php

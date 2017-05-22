@@ -2,7 +2,7 @@
 
 class Config {
 	static function init() {
-		self::$db_file = '../zwerfdata.db'; // Relative to web folder (or absolute)
+		self::$db_file = '../data/zwerfdata.db'; // Relative to web folder (or absolute)
 		self::$session_name = ''; // Can use used to handle multiple instances
 		self::$secure_cookies = true; // Only set true if using HTTPS
 		self::$qrlib_path = '/usr/share/phpqrcode/qrlib.php'; // Absolute, or

@@ -178,7 +178,7 @@ function print_visits() {
 	foreach(get_visits() as $visit) {
 		$date = date_create_from_format('Y-m-d H:i:s', $visit['moment'], new DateTimeZone("UTC"));
 		$age = $date->diff(new DateTime());
-		printf("<tr><td>%s</td><td>%s</td><td>%d</td></tr>",
+		printf('<tr><td><i class="glyphicon glyphicon-map-marker" aria-hidden="true"></i> %s</td><td>%s</td><td>%d</td></tr>',
 			$visit['tag'],
 			format_interval($age),
 			$visit['score']);
@@ -295,15 +295,15 @@ if(isset($_GET['beacon'])) {
 		</div>
 <?php
 if(isset($login_error)) {
-	printf('<div class="row">Login failed: %s</div>', $login_error);
+	printf('<div class="alert alert-warning"><i class="glyphicon glyphicon-exclamation-sign"></i> Login failed: %s</div>', $login_error);
 }
 
 if(isset($beacon_error)) {
-	printf('<div class="row">Beacon visit registration failed: %s</div>', $beacon_error);
+	printf('<div class="alert alert-danger"><i class="glyphicon glyphicon-remove-sign"></i> Beacon visit registration failed:<br>%s</div>', $beacon_error);
 }
 
 if(isset($beacon_visited)) {
-	printf('<div class="row">Congratualations, you have visited the beacon <b>%s</b></div>', $beacon_visited);
+	printf('<div class="alert alert-success"><i class="glyphicon glyphicon-ok-sign"></i> Congratualations, you have visited the beacon <b>%s</b></div>', $beacon_visited);
 }
 ?>
 		<div class="row">

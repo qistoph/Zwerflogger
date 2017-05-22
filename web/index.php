@@ -166,8 +166,22 @@ function get_visits() {
 	return $visits;
 }
 
+function get_progress() {
+	global $db;
+
+	if(!is_logged_in()) {
+		throw new Exception("get_progress requires logged in team");
+	}
+
+	$stmt = $db->prepare('SELECT CAST(COUNT(team) AS FLOAT) / COUNT(*) AS progress FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE visits.team = :teamid OR visits.beacon IS NULL;');
+	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
+	$result = $stmt->execute();
+
+	return $result->fetchArray()[0];
+}
+
 function print_visits() {
-	print '<table style="margin:0px auto; width:500px">
+	print '<table class="table table-striped table-hover">
 				<tr>
 					<th>Tag</th>
 					<th>Time</th>
@@ -217,7 +231,7 @@ function print_ranking() {
 		ORDER BY COUNT(*) DESC;');
 	$result = $stmt->execute();
 
-	print '<table style="margin:0px auto; width:500px">
+	print '<table class="table table-striped table-hover">
 				<tr>
 					<th>Rank</th>
 					<th>Team</th>
@@ -231,7 +245,7 @@ function print_ranking() {
 		$class = '';
 
 		if(isset($_SESSION['teamid']) && $rank['teamid'] == $_SESSION['teamid']) {
-			$class = 'class="myteam"';
+			$class = 'class="myteam info"';
 		}
 
 		printf("<tr %s><td>%d.</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>", $class, $rankNr, $rank['name'], $rank['score'], $rank['logintime'], $rank['lastbeacon']);
@@ -312,28 +326,38 @@ if(isset($beacon_visited)) {
 		</div>
 
 <?php
-	if(isset($_SESSION['teamid'])) {
+if(isset($_SESSION['teamid'])) {
+?>
+		<div class="row">
+<?php
 		printf("Welcome %s<br>", $_SESSION['teamname']);
+		printf('
+		<div class="progress" style="width: 60%%">
+			<div class="progress-bar" role="progressbar" style="min-width: 2em; width: %1$d%%">%1$d%%</div>
+		</div>', get_progress() * 100);
 ?>
 
-<b>Your visits:</b>
-<?php print_visits(); ?>
-
+			<b>Your visits:</b>
+			<?php print_visits(); ?>
+		</div>
 <?php
 	} else {
 ?>
-<form method="GET">
+		<div class="row">
+			<form method="GET">
 <?php
 		if(isset($_GET['beacon'])) {
 			printf("<input type=\"hidden\" name=\"beacon\" value=\"%s\">", htmlspecialchars($_GET['beacon']));
 		}
 ?>
-	<label for="teamid">Team ID:</label><input type="text" name="teamid" id="teamid"><br>
-	<input type="submit" value="Login">
-</form>
+				<label for="teamid">Team ID:</label><input type="text" name="teamid" id="teamid"><br>
+				<input type="submit" value="Login">
+			</form>
+		</div>
 <?php
 	}
 ?>
+	</div>
 </body>
 </html>
 

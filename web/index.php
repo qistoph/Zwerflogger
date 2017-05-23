@@ -366,7 +366,11 @@ if(isset($_SESSION['teamid'])) {
 		}
 ?>
 				<div class="input-group">
-					<span class="input-group-addon" id="basic-addon1"><i class="glyphicon glyphicon-qrcode" aria-hidden="true"></i></span>
+					<span class="input-group-btn">
+						<a href="intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end" class="btn btn-default">
+							<i class="glyphicon glyphicon-qrcode" aria-hidden="true"></i>
+						</a>
+					</span>
 					<input type="text" class="form-control" name="teamid" placeholder="Team ID">
 					<span class="input-group-btn">
 						<button type="submit" class="btn btn-primary">Login</button>

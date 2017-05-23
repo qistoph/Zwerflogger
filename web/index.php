@@ -319,6 +319,8 @@ if(isset($_GET['beacon'])) {
 	<!-- Optional theme -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
 	<!-- Latest compiled and minified JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
@@ -327,13 +329,14 @@ if(isset($_GET['beacon'])) {
 	<link rel="stylesheet" href="zwerfstyle.css">
 </head>
 <body>
+
 		<ul class="navbar navbar-default">
 			<div class="navbar-brand">
 				Cyberzwerftocht 2017
 			</div>
 <?php
 if(is_logged_in()) {
-	print '<li class="nav pull-right" style="margin-right: 20px"><a href="?action=logout" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-log-out"></i></a></li>';
+	print '<li class="nav pull-right" style="margin-right: 20px"><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#logoutConfirm"><i class="glyphicon glyphicon-log-out"></i></a></li>';
 }
 ?>
 		</ul>
@@ -413,6 +416,26 @@ if(isset($_SESSION['teamid'])) {
 }
 ?>
 	</div>
+
+	<!-- Logout Modal -->
+	<div class="modal fade" id="logoutConfirm" tabindex="-1">
+	  <div class="modal-dialog">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="myModalLabel">Logout?</h4>
+		  </div>
+		  <div class="modal-body">
+			Are you sure you want to logout?
+		  </div>
+		  <div class="modal-footer">
+			<a type="button" class="btn btn-default" href="?action=logout">Logout</a>
+			<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
+
 </body>
 </html>
 

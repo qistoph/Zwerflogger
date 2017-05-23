@@ -20,10 +20,8 @@ function logout() {
 	);
 }
 
-function login($teamid, &$error_msg ) {
+function get_team_info($teamid, &$error_msg) {
 	global $db;
-
-	logout();
 
 	// Check input format
 	if(preg_match('/^[0-9A-F-]{32}$/i', $teamid) === 0) {
@@ -39,6 +37,21 @@ function login($teamid, &$error_msg ) {
 	// Check team id is in database
 	if($team === FALSE) {
 		$error_msg = "Invalid TeamID.";
+		return false;
+	}
+
+	return $team;
+}
+
+function login($teamid, &$error_msg ) {
+	global $db;
+
+	logout();
+
+	$team = get_team_info($teamid, $error_msg);
+
+	if($team === FALSE) {
+		// $error_msg is set by get_team_info
 		return false;
 	}
 
@@ -259,14 +272,19 @@ function print_ranking() {
 }
 
 if(isset($_GET['action'])) {
-	if($_GET['action'] == 'logout') {
+	if($_GET['action'] == 'login') {
+		$teamid = $_GET['loginid'];
+		if(login($teamid, $login_error)) {
+			header('Location: '.explode('?', $_SERVER['REQUEST_URI'])[0]);
+			exit;
+		}
+	} elseif($_GET['action'] == 'logout') {
 		logout();
 	}
 } elseif(isset($_GET['teamid'])) {
-	$teamid = $_GET['teamid'];
-	if(login($teamid, $login_error)) {
-		header('Location: '.explode('?', $_SERVER['REQUEST_URI'])[0]);
-		exit;
+	$team = get_team_info($_GET['teamid'], $login_error);
+	if($team !== FALSE) {
+		$show_login_dialog = true;
 	}
 } elseif(!isset($_SESSION['teamid'])) {
 	if(isset($_COOKIE['teamid'])) {
@@ -334,6 +352,21 @@ if(isset($beacon_error)) {
 if(isset($beacon_visited)) {
 	printf('<div class="alert alert-success"><i class="glyphicon glyphicon-ok-sign"></i> Congratualations, you have visited the beacon <b>%s</b></div>', $beacon_visited);
 }
+
+if($show_login_dialog) {
+?>
+		<div class="row">
+			<div class="col-xs-6 col-xs-offset-3 col-sm-4 col-sm-offset-4">
+				<div class="alert alert-success">
+					<i class="glyphicon glyphicon-ok-sign"></i>
+					Welcome <?=$team['name']?>.<br><br>
+					<a href="?action=login&loginid=<?=$team['teamid']?>" class="btn btn-primary">Login</a>
+					<a href="?" class="btn btn-default">Cancel</a>
+				</div>
+			</div>
+		</div>
+<?php
+}
 ?>
 		<div class="row">
 			<b>Rankings:</b>
@@ -345,7 +378,7 @@ if(isset($_SESSION['teamid'])) {
 ?>
 		<div class="row">
 <?php
-		printf("Welcome %s<br>", $_SESSION['teamname']);
+		printf("<b>%s</b><br>", $_SESSION['teamname']);
 		printf('
 		<div class="progress" style="width: 60%%">
 			<div class="progress-bar" role="progressbar" style="min-width: 2em; width: %1$d%%">%1$d%%</div>
@@ -356,10 +389,11 @@ if(isset($_SESSION['teamid'])) {
 			<?php print_visits(); ?>
 		</div>
 <?php
-	} else {
+} else {
 ?>
 		<div class="row">
 			<form method="GET" class="form-inline">
+				<input type="hidden" name="action" value="login">
 <?php
 		if(isset($_GET['beacon'])) {
 			printf("<input type=\"hidden\" name=\"beacon\" value=\"%s\">", htmlspecialchars($_GET['beacon']));
@@ -367,7 +401,7 @@ if(isset($_SESSION['teamid'])) {
 ?>
 				<div class="input-group">
 					<span class="input-group-addon" id="basic-addon1"><i class="glyphicon glyphicon-qrcode" aria-hidden="true"></i></span>
-					<input type="text" class="form-control" name="teamid" placeholder="Team ID">
+					<input type="text" class="form-control" name="loginid" placeholder="Team ID">
 					<span class="input-group-btn">
 						<button type="submit" class="btn btn-primary">Login</button>
 					</span>
@@ -376,7 +410,7 @@ if(isset($_SESSION['teamid'])) {
 			Or use your QR-code scanner app
 		</div>
 <?php
-	}
+}
 ?>
 	</div>
 </body>

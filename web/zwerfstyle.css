@@ -1,3 +1,7 @@
 .myteam {
 	font-weight: bold;
 }
+
+.line {
+	display: inline-block;
+}

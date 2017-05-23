@@ -10,6 +10,10 @@ class Config {
 
 		self::$hide_secret = ''; // Use your own random secret here
 
+		self::$time_zone = new DateTimeZone('GMT+2'); // Time zone used to display dates and times
+		self::$datetime_format = 'Y-m-d H:i:s'; // Format used to display date+time
+		self::$time_format = 'H:i:s'; // Format used to display time
+
 		self::$QR_eclevel = 0; // 0 = L, 1 = M, 2 = Q, 3 = H
 		self::$QR_pixel_size = 4;
 		self::$QR_margin = 2;
@@ -26,6 +30,9 @@ class Config {
 	static $secure_cookies;
 	static $qrlib_path;
 	static $hide_secret;
+	static $time_zone;
+	static $datetime_format;
+	static $time_format;
 	static $QR_eclevel;
 	static $QR_pixel_size;
 	static $QR_margin;

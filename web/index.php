@@ -4,6 +4,7 @@ session_name(Config::$session_name); // Session per instance
 session_start();
 
 $db = new SQLite3(Config::$db_file, SQLITE3_OPEN_READWRITE);
+$show_login_dialog = false;
 
 function is_logged_in() {
 	return isset($_SESSION['teamid']);
@@ -253,7 +254,7 @@ function print_ranking() {
 					<th>Score</th>
 					<th>Start time</th>
 					<th>Last beacon</th>
-				</tr>';
+				</tr>'."\n";
 
 	$rankNr = 1;
 	while(($rank = $result->fetchArray()) !== FALSE) {
@@ -263,12 +264,19 @@ function print_ranking() {
 			$class = 'class="myteam info"';
 		}
 
-		printf("<tr %s><td>%d.</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>", $class, $rankNr, $rank['name'], $rank['score'], $rank['logintime'], $rank['lastbeacon']);
+		$logintimeStr = '';
+		if($rank['logintime'] != '') {
+			print_r($rank['logintime'] == '');
+			$logintime = date_create_from_format('Y-m-d H:i:s', $rank['logintime'], new DateTimeZone("UTC"));
+			$logintime->setTimezone(Config::$time_zone);
+			$logintimeStr = $logintime->format(Config::$time_format);
+		}
+		printf("<tr %s><td>%d.</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>\n", $class, $rankNr, $rank['name'], $rank['score'], $logintimeStr, $rank['lastbeacon']);
 
 		$rankNr++;
 	}
 
-	print '</table>';
+	print "</table>\n";
 }
 
 if(isset($_GET['action'])) {
@@ -358,8 +366,8 @@ if($show_login_dialog) {
 		<div class="row">
 			<div class="col-xs-6 col-xs-offset-3 col-sm-4 col-sm-offset-4">
 				<div class="alert alert-success">
-					<i class="glyphicon glyphicon-ok-sign"></i>
-					Welcome <?=$team['name']?>.<br><br>
+					<i class="glyphicon glyphicon-flag"></i>
+					<span class="line">Welcome</span><span class="line"><?=$team['name']?>.</span><br><br>
 					<a href="?action=login&loginid=<?=$team['teamid']?>" class="btn btn-primary">Login</a>
 					<a href="?" class="btn btn-default">Cancel</a>
 				</div>
@@ -417,6 +425,13 @@ if(isset($_SESSION['teamid'])) {
 }
 ?>
 	</div>
+
+<!--
+Branch: <?=exec("git branch | grep '^\*' | cut -d' ' -f2")?>
+
+Commit: <?=exec("git rev-parse --short HEAD")?>
+
+-->
 </body>
 </html>
 

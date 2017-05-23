@@ -309,18 +309,16 @@ if(isset($_GET['beacon'])) {
 	<link rel="stylesheet" href="zwerfstyle.css">
 </head>
 <body>
-	<nav class="navbar navbar-default">
-		<div class="container">
+		<ul class="navbar navbar-default">
 			<div class="navbar-brand">
 				Cyberzwerftocht 2017
 			</div>
 <?php
 if(is_logged_in()) {
-	print '<form method="GET"><button type="submit" class="btn btn-default navbar-btn navbar-right" name="action" value="logout"><i class="glyphicon glyphicon-log-out"></i></button></form>';
+	print '<li class="nav pull-right" style="margin-right: 20px"><a href="?action=logout" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-log-out"></i></a></li>';
 }
 ?>
-		</div>
-	</nav>
+		</ul>
 
 	<div class="container" align="center">
 

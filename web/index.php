@@ -368,8 +368,10 @@ if(isset($_SESSION['teamid'])) {
 				<div class="input-group">
 					<span class="input-group-addon" id="basic-addon1"><i class="glyphicon glyphicon-qrcode" aria-hidden="true"></i></span>
 					<input type="text" class="form-control" name="teamid" placeholder="Team ID">
+					<span class="input-group-btn">
+						<button type="submit" class="btn btn-primary">Login</button>
+					</span>
 				</div>
-				<button type="submit" class="btn btn-primary">Login</button>
 			</form>
 		</div>
 <?php

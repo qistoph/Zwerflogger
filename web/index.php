@@ -344,7 +344,7 @@ if(isset($_GET['beacon'])) {
 			</div>
 <?php
 if(is_logged_in()) {
-	print '<li class="nav pull-right" style="margin-right: 20px"><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#logoutConfirm"><i class="glyphicon glyphicon-log-out"></i></a></li>';
+	print '<li class="nav pull-right" style="margin-right: 20px"><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#logoutConfirm"><i class="glyphicon glyphicon-log-out"></i></button></li>';
 }
 ?>
 		</ul>
@@ -441,7 +441,7 @@ if(isset($_SESSION['teamid'])) {
 			Are you sure you want to logout?
 		  </div>
 		  <div class="modal-footer">
-			<a type="button" class="btn btn-default" href="?action=logout">Logout</a>
+			<a class="btn btn-default" href="?action=logout">Logout</a>
 			<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
 		  </div>
 		</div>

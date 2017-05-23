@@ -55,7 +55,7 @@ if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != Config::$hide_secret) {
 <body>
 <h1>Teams</h1>
 <?php
-$db = new SQLite3('../zwerfdata.db', SQLITE3_OPEN_READWRITE);
+$db = new SQLite3(Config::$db_file, SQLITE3_OPEN_READWRITE);
 
 $stmt = $db->prepare('SELECT teamid, name FROM teams');
 $result = $stmt->execute();

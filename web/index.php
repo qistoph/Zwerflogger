@@ -1,5 +1,6 @@
 <?php
-include('../config.php');
+require_once('../config.php');
+require_once('../pushover.php');
 session_name(Config::$session_name); // Session per instance
 session_start();
 
@@ -103,7 +104,7 @@ function check_beacon($beaconid, &$beacon_tag, &$error_msg) {
 		$error_msg = "Invalid beacon";
 		return false;
 	}
-	
+
 	$stmt = $db->prepare('SELECT beaconid, tag FROM beacons WHERE beaconid LIKE :beaconid');
 	$stmt->bindValue(':beaconid', $beaconid, SQLITE3_TEXT);
 	$result = $stmt->execute();
@@ -283,6 +284,7 @@ if(isset($_GET['action'])) {
 	if($_GET['action'] == 'login') {
 		$teamid = $_GET['loginid'];
 		if(login($teamid, $login_error)) {
+			pushover_send(sprintf('<b>%s</b> logged in.', $_SESSION['teamname']));
 			header('Location: '.explode('?', $_SERVER['REQUEST_URI'])[0]);
 			exit;
 		}
@@ -308,6 +310,8 @@ if(isset($_GET['beacon'])) {
 	} else {
 		if(check_beacon($_GET['beacon'], $beacon_tag, $beacon_error)) {
 			$beacon_visited = $beacon_tag;
+
+			pushover_send(sprintf('<b>%s</b> visited beacon <b>%s</b>.', $_SESSION['teamname'], $beacon_tag));
 		}
 	}
 }
@@ -378,6 +382,8 @@ if($show_login_dialog) {
 		</div>
 <?php
 }
+
+// Always part
 ?>
 		<div class="row">
 			<b>Rankings:</b>
@@ -386,6 +392,7 @@ if($show_login_dialog) {
 
 <?php
 if(isset($_SESSION['teamid'])) {
+	// Logged in page
 ?>
 		<div class="row">
 <?php
@@ -398,9 +405,12 @@ if(isset($_SESSION['teamid'])) {
 
 			<b>Your visits:</b>
 			<?php print_visits(); ?>
+
+			<a href="https://pushover.net/subscribe/Cyberzwerftocht-hbbthyc43sb19e6">Subscribe to notifications with <img src="imgs/pushover.png" style="height: 1em; vertical-align: baseline"></a>
 		</div>
 <?php
 } else {
+	// Not logged in
 ?>
 		<div class="row">
 			<form method="GET" class="form-inline">
@@ -461,7 +471,7 @@ Commit: <?=exec("git rev-parse --short HEAD")?>
 /*
 Sample queries:
 
-# Insert beacon 
+# Insert beacon
 INSERT INTO beacons VALUES(lower(hex(randomblob(16))), 'First', 1, 1);
 
 # Insert team:

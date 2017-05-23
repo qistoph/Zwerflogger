@@ -6,7 +6,7 @@ include('../config.php');
 include(Config::$qrlib_path);
 
 function url_for_field($field, $value) {
-	$qrurl = sprintf('%s?%s=%s', Config::$QR_baseURL, urlencode($field), urlencode($value));
+	$qrurl = sprintf('%s?%s=%s', Config::$baseURL, urlencode($field), urlencode($value));
 	return $qrurl;
 }
 

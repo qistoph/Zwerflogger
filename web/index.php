@@ -373,6 +373,7 @@ if(isset($_SESSION['teamid'])) {
 					</span>
 				</div>
 			</form>
+			Or use your QR-code scanner app
 		</div>
 <?php
 	}

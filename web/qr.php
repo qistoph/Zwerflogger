@@ -52,10 +52,10 @@ if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != Config::$hide_secret) {
 <body>
 <h1>Teams</h1>
 <?php
-$stmt = $db->prepare('SELECT teamid, name FROM teams');
+$stmt = $db->prepare('SELECT teamid, name, pin FROM teams');
 $result = $stmt->execute();
 while(($team = $result->fetchArray()) !== FALSE) {
-	printf('<div class="card"><h1>%s</h1><img src="qr.php?field=teamid&value=%s" title="%s"></div>', $team['name'], $team['teamid'], url_for_field('teamid', $team['teamid']));
+	printf('<div class="card"><h1>%s</h1><img src="qr.php?field=teamid&value=%s" title="%s"><br><span class="pin">PIN %s</span></div>', $team['name'], $team['teamid'], url_for_field('teamid', $team['teamid']), $team['pin']);
 }
 
 ?>

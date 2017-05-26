@@ -44,6 +44,28 @@ function get_team_info($teamid, &$error_msg) {
 	return $team;
 }
 
+function verifyPin($teamid, $pin, &$error_msg) {
+	global $db;
+
+	$stmt = $db->prepare('SELECT teamid FROM teams WHERE teamid = :teamid AND pin = :pin');
+	$stmt->bindValue(':teamid', $teamid, SQLITE3_TEXT);
+	$stmt->bindValue(':pin', $pin, SQLITE3_TEXT);
+	$result = $stmt->execute();
+	$team = $result->fetchArray();
+
+	if($team === FALSE) {
+		$error_msg = "Invalid TeamID or PIN.";
+		return false;
+	}
+
+	if($team['teamid'] != $teamid) {
+		$error_msg = "Internal error logging in.";
+		return false;
+	}
+
+	return true;
+}
+
 function login($teamid, &$error_msg ) {
 	global $db;
 
@@ -215,14 +237,18 @@ function print_visits() {
 	print "</table>";
 }
 
-if(isset($_GET['action'])) {
-	if($_GET['action'] == 'login') {
-		$teamid = $_GET['loginid'];
-		if(login($teamid, $login_error)) {
-			header('Location: '.explode('?', $_SERVER['REQUEST_URI'])[0]);
-			exit;
+if(isset($_REQUEST['action'])) {
+	if($_REQUEST['action'] == 'login') {
+		$teamid = $_POST['loginid'];
+		$pin = $_POST['pin'];
+
+		if(verifyPin($teamid, $pin, $login_error)) {
+			if(login($teamid, $login_error)) {
+				header('Location: '.$_SERVER['REQUEST_URI']);
+				exit;
+			}
 		}
-	} elseif($_GET['action'] == 'logout') {
+	} elseif($_REQUEST['action'] == 'logout') {
 		logout();
 	}
 } elseif(isset($_GET['teamid'])) {
@@ -305,17 +331,21 @@ if($show_login_dialog) {
 		<div class="row">
 			<div class="col-xs-6 col-xs-offset-3 col-sm-4 col-sm-offset-4">
 				<div class="alert alert-success">
-					<i class="glyphicon glyphicon-flag"></i>
-					<span class="line">Welcome</span><span class="line"><?=$team['name']?>.</span><br><br>
-					<a href="?action=login&loginid=<?=$team['teamid']?>" class="btn btn-primary">Login</a>
-					<a href="?" class="btn btn-default">Cancel</a>
+					<form method="POST" action="<?=Config::$QR_baseURL?>">
+						<input type="hidden" name="action" value="login">
+						<input type="hidden" name="loginid" value="<?=$team['teamid']?>">
+						<i class="glyphicon glyphicon-flag"></i>
+						<span class="line">Welcome</span><span class="line"><?=$team['name']?>.</span><br><br>
+						<label for="pin">PIN</label>
+						<input type="password" name="pin" size="6"><br><br>
+						<button type="submit" class="btn btn-primary">Login</button>
+						<a href="?" class="btn btn-default">Cancel</a>
+					</form>
 				</div>
 			</div>
 		</div>
 <?php
-}
-
-if(isset($_SESSION['teamid'])) {
+} else if(isset($_SESSION['teamid'])) {
 ?>
 		<div class="row">
 <?php
@@ -332,28 +362,42 @@ if(isset($_SESSION['teamid'])) {
 <?php
 } else {
 ?>
-		<div class="row">
-			<form method="GET" class="form-inline">
-				<input type="hidden" name="action" value="login">
+		<form method="POST" class="form" action="<?=Config::$QR_baseURL?>">
+			<input type="hidden" name="action" value="login">
+			<div class="col-xs-10 col-xs-offset-1 col-sm-4 col-sm-offset-4">
+				<div class="form-group">
 <?php
-		if(isset($_GET['beacon'])) {
-			printf("<input type=\"hidden\" name=\"beacon\" value=\"%s\">", htmlspecialchars($_GET['beacon']));
-		}
+	if(isset($_GET['beacon'])) {
+		printf("<input type=\"hidden\" name=\"beacon\" value=\"%s\">", htmlspecialchars($_GET['beacon']));
+	}
 ?>
-				<div class="input-group">
-					<span class="input-group-btn">
-						<a href="intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end" class="btn btn-default">
-							<i class="glyphicon glyphicon-qrcode" aria-hidden="true"></i>
-						</a>
-					</span>
-					<input type="text" class="form-control" name="loginid" placeholder="Team ID">
-					<span class="input-group-btn">
+					<div class="input-group">
+						<span class="input-group-btn">
+							<a href="intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end" class="btn btn-default">
+								<i class="glyphicon glyphicon-qrcode" aria-hidden="true"></i>
+							</a>
+						</span>
+						<input type="text" class="form-control" name="loginid" placeholder="Team ID">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="input-group">
+						<span class="input-group-addon">
+							<i class="glyphicon glyphicon-lock" aria-hidden="true"></i>
+						</span>
+						<input type="password" class="form-control" name="pin" placeholder="PIN">
+					</div>
+				</div>
+				<div class="form-group">
+					<span class="input-group">
 						<button type="submit" class="btn btn-primary">Login</button>
 					</span>
 				</div>
-			</form>
-			Or use your QR-code scanner app
-		</div>
+				<div class="form-group">
+					Or use your QR-code scanner app
+				</div>
+			</div>
+		</form>
 <?php
 }
 ?>

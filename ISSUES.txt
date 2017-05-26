@@ -3,3 +3,4 @@ Feel free to add issues.
 
 - Apparently some scanners (at least Android Zxing's) prefetch the URL scanned. (They show the title of the page afterwards.) This prefetch is registered as the login, eventhough it's actually just a preview. Maybe show a page with a button to continue login instead of logging in directly.
 - Logging in with just the teamid is not secure. Maybe add a PIN/password?
+  - WIP: PIN is now required in form, but cookie is still teamid only

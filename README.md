@@ -10,7 +10,7 @@
 * Make sure to set a `session_name` and `hide_secret`
 * Create the database, e.g. `sqlite3 data/zwerfdata.db < zwerfdata.schema`
 * Insert the required teams using `sqlite3 data/zwerfdata.db`:
-  * `INSERT INTO teams VALUES(lower(hex(randomblob(16))), 'Team Unicorn');`
+  * `INSERT INTO teams VALUES(lower(hex(randomblob(16))), 'Team Unicorn', substr('000000'||(abs(random())%1000000), -6));`
   * Field 1, the id, must be a 32 characters hex string
 * Insert the beacons using `sqlite3 data/zwerfdata.db`:
   * `INSERT INTO beacons VALUES(lower(hex(randomblob(16))), 'First', 1, 1);`

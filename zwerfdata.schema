@@ -6,7 +6,8 @@ CREATE TABLE beacons (
 
 CREATE TABLE teams (
 	teamid CHAR(32) PRIMARY KEY COLLATE NOCASE,
-	name VARCHAR(50)
+	name VARCHAR(50),
+	pin CHAR(6)
 );
 
 CREATE TABLE visits (

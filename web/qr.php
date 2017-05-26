@@ -5,10 +5,7 @@
 include('../config.php');
 include(Config::$qrlib_path);
 
-function url_for_field($field, $value) {
-	$qrurl = sprintf('%s?%s=%s', Config::$QR_baseURL, urlencode($field), urlencode($value));
-	return $qrurl;
-}
+$db = new SQLite3(Config::$db_file, SQLITE3_OPEN_READWRITE);
 
 if(isset($_REQUEST['field']) && isset($_REQUEST['value'])) {
 	$qrurl = url_for_field($_REQUEST['field'], $_REQUEST['value']);
@@ -55,8 +52,6 @@ if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != Config::$hide_secret) {
 <body>
 <h1>Teams</h1>
 <?php
-$db = new SQLite3(Config::$db_file, SQLITE3_OPEN_READWRITE);
-
 $stmt = $db->prepare('SELECT teamid, name FROM teams');
 $result = $stmt->execute();
 while(($team = $result->fetchArray()) !== FALSE) {
@@ -72,5 +67,91 @@ while(($beacon = $result->fetchArray()) !== FALSE) {
 	printf('<div class="card"><h1>Cyber Zwerftocht</h1><img src="qr.php?field=beacon&value=%1$s" title="%2$s"><br>%3$s<br></div>', $beacon['beaconid'], url_for_field('beacon', $beacon['beaconid']), $beacon['tag']);
 }
 ?>
+
+<h1>Registrations</h1>
+<table>
+<?php
+$stmt = $db->prepare('SELECT beaconid, tag FROM beacons');
+$result = $stmt->execute();
+$beacons = [];
+while(($beacon = $result->fetchArray()) !== FALSE) {
+	$beacons[] = $beacon;
+}
+
+print '<tr>';
+print '<th>Team</th>';
+print '<th>Starttime</th>';
+
+foreach($beacons as $beacon) {
+	printf('<th>%s</th>', $beacon['tag']);
+}
+print '</tr>';
+
+$stmt = $db->prepare('
+SELECT name, teamid, firstLogins.moment AS logintime
+FROM teams
+LEFT JOIN (
+	SELECT loginsL.team, loginsL.moment
+	FROM logins loginsL
+	LEFT JOIN logins loginsR ON loginsL.team = loginsR.team AND loginsL.moment > loginsR.moment
+	WHERE loginsR.team IS NULL
+) firstLogins ON firstLogins.team = teams.teamid
+GROUP BY teams.name
+ORDER BY COUNT(*) DESC;
+');
+$result = $stmt->execute();
+$teams = [];
+while(($team = $result->fetchArray()) !== FALSE) {
+	$teams[] = $team;
+}
+
+foreach($teams as $team) {
+	$logintimeStr = '-'; // Default string to show when no login for team
+	if($team['logintime'] != '') {
+		$logintime = date_create_from_format('Y-m-d H:i:s', $team['logintime'], new DateTimeZone("UTC"));
+		$logintime->setTimezone(Config::$time_zone);
+		$logintimeStr = $logintime->format(Config::$time_format);
+	}
+	printf('<tr><td>%s</td><td>%s</td>', $team['name'], $logintimeStr);
+
+	$stmt = $db->prepare('
+SELECT beacon, moment
+FROM visits
+WHERE team = :teamid');
+	$stmt->bindValue(':teamid', $team['teamid']);
+	$result = $stmt->execute();
+	$visits = [];
+	while(($visit = $result->fetchArray()) !== FALSE) {
+		$visits[] = $visit;
+	}
+
+	foreach($beacons as $beacon) {
+		$key = array_search($beacon['beaconid'], array_column($visits, 'beacon'));
+		if($key === FALSE) {
+			print '<td>-</td>';
+		} else {
+			/* Visited: Yes */
+			print '<td>Yes</td>';
+			//*/
+
+			/* Show time of visit *
+			$visittime = date_create_from_format('Y-m-d H:i:s', $visits[$key]['moment'], new DateTimeZone("UTC"));
+			$visittime->setTimezone(Config::$time_zone);
+			$visittimeStr = $visittime->format(Config::$time_format);
+			printf('<td>%s</td>', $visittimeStr);
+			//*/
+		}
+	}
+
+	print '</tr>';
+}
+
+?>
+</table>
 </body>
 </html>
+<?php
+function url_for_field($field, $value) {
+	$qrurl = sprintf('%s?%s=%s', Config::$QR_baseURL, urlencode($field), urlencode($value));
+	return $qrurl;
+}

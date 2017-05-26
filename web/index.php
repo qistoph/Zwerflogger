@@ -103,7 +103,7 @@ function check_beacon($beaconid, &$beacon_tag, &$error_msg) {
 		$error_msg = "Invalid beacon";
 		return false;
 	}
-	
+
 	$stmt = $db->prepare('SELECT beaconid, tag FROM beacons WHERE beaconid LIKE :beaconid');
 	$stmt->bindValue(':beaconid', $beaconid, SQLITE3_TEXT);
 	$result = $stmt->execute();
@@ -217,68 +217,6 @@ function print_visits() {
 	print "</table>";
 }
 
-function print_ranking() {
-	global $db;
-
-	$stmt = $db->prepare('
-		SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, firstLogins.moment AS logintime, lastVisits.tag AS lastbeacon
-		FROM teams
-		LEFT JOIN visits ON teams.teamid = visits.team
-		LEFT JOIN beacons ON beacons.beaconid = visits.beacon
-		LEFT JOIN (
-		  SELECT loginsL.team, loginsL.moment
-		  FROM logins loginsL
-		  LEFT JOIN logins loginsR
-			ON loginsL.team = loginsR.team
-			AND loginsL.moment > loginsR.moment
-		  WHERE loginsR.team IS NULL
-		) firstLogins ON firstLogins.team = teams.teamid
-		LEFT JOIN (
-		  SELECT visitsL.team, beacons.tag
-		  FROM visits visitsL
-		  LEFT JOIN visits visitsR
-			ON visitsL.team = visitsR.team
-			AND visitsL.moment < visitsR.moment
-		  LEFT JOIN beacons
-			ON visitsL.beacon = beacons.beaconid
-		  WHERE visitsR.team is NULL
-		) lastVisits ON lastVisits.team = teams.teamid
-		GROUP BY teams.name
-		ORDER BY COUNT(*) DESC;');
-	$result = $stmt->execute();
-
-	print '<table class="table table-striped table-hover">
-				<tr>
-					<th>Rank</th>
-					<th>Team</th>
-					<th>Score</th>
-					<th>Start time</th>
-					<th>Last beacon</th>
-				</tr>'."\n";
-
-	$rankNr = 1;
-	while(($rank = $result->fetchArray()) !== FALSE) {
-		$class = '';
-
-		if(isset($_SESSION['teamid']) && $rank['teamid'] == $_SESSION['teamid']) {
-			$class = 'class="myteam info"';
-		}
-
-		$logintimeStr = '';
-		if($rank['logintime'] != '') {
-			print_r($rank['logintime'] == '');
-			$logintime = date_create_from_format('Y-m-d H:i:s', $rank['logintime'], new DateTimeZone("UTC"));
-			$logintime->setTimezone(Config::$time_zone);
-			$logintimeStr = $logintime->format(Config::$time_format);
-		}
-		printf("<tr %s><td>%d.</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>\n", $class, $rankNr, $rank['name'], $rank['score'], $logintimeStr, $rank['lastbeacon']);
-
-		$rankNr++;
-	}
-
-	print "</table>\n";
-}
-
 if(isset($_GET['action'])) {
 	if($_GET['action'] == 'login') {
 		$teamid = $_GET['loginid'];
@@ -378,13 +316,7 @@ if($show_login_dialog) {
 		</div>
 <?php
 }
-?>
-		<div class="row">
-			<b>Rankings:</b>
-			<?php print_ranking(); ?>
-		</div>
 
-<?php
 if(isset($_SESSION['teamid'])) {
 ?>
 		<div class="row">
@@ -461,7 +393,7 @@ Commit: <?=exec("git rev-parse --short HEAD")?>
 /*
 Sample queries:
 
-# Insert beacon 
+# Insert beacon
 INSERT INTO beacons VALUES(lower(hex(randomblob(16))), 'First', 1, 1);
 
 # Insert team:

@@ -168,7 +168,7 @@ function get_visits() {
 		throw new Exception("get_visits requires logged in team");
 	}
 
-	$stmt = $db->prepare('SELECT beaconid, tag, moment, score, mandatory FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE team = :teamid ORDER BY moment DESC');
+	$stmt = $db->prepare('SELECT beaconid, tag, moment, score FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE team = :teamid ORDER BY moment DESC');
 	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
 	$result = $stmt->execute();
 
@@ -187,7 +187,7 @@ function get_progress() {
 		throw new Exception("get_progress requires logged in team");
 	}
 
-	$stmt = $db->prepare('SELECT CAST(COUNT(team) AS FLOAT) / COUNT(*) AS progress FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE beacons.mandatory != 0 AND (visits.team = :teamid OR visits.beacon IS NULL)');
+	$stmt = $db->prepare('SELECT CAST(COUNT(team) AS FLOAT) / COUNT(*) AS progress FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE visits.team = :teamid OR visits.beacon IS NULL');
 	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
 	$result = $stmt->execute();
 
@@ -200,18 +200,16 @@ function print_visits() {
 					<th>Tag</th>
 					<th>Time</th>
 					<th>Score</th>
-					<th>Mandatory</th>
 				</tr>';
 
 
 	foreach(get_visits() as $visit) {
 		$date = date_create_from_format('Y-m-d H:i:s', $visit['moment'], new DateTimeZone("UTC"));
 		$age = $date->diff(new DateTime());
-		printf('<tr><td><i class="glyphicon glyphicon-map-marker" aria-hidden="true"></i> %s</td><td>%s</td><td>%d</td><td>%s</td></tr>',
+		printf('<tr><td><i class="glyphicon glyphicon-map-marker" aria-hidden="true"></i> %s</td><td>%s</td><td>%d</td></tr>',
 			$visit['tag'],
 			format_interval($age),
-			$visit['score'],
-			$visit['mandatory'] ? '<i class="glyphicon glyphicon-exclamation-sign" aria-label="Mandatory"></i>' : '');
+			$visit['score']);
 	}
 
 	print "</table>";

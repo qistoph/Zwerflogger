@@ -17,7 +17,6 @@
   * Field 1, the id, must be a 32 characters hex string
   * Field 2, the name, a unique name for the beacon. Will be visible to the teams (website, QR-label)
   * Field 3, the score, the score for this beacon
-  * Field 4, mandatory, should be 0 or 1 to indicate if this beacon MUST be visited (1)
 * Make the database writeable for your HTTP-server, e.g.:
   * `chown -R :www-data data`
   * `chmod -R g+w data`

@@ -130,11 +130,11 @@ WHERE team = :teamid');
 		if($key === FALSE) {
 			print '<td>-</td>';
 		} else {
-			/* Visited: Yes */
+			/* Visited: Yes *
 			print '<td>Yes</td>';
 			//*/
 
-			/* Show time of visit *
+			/* Show time of visit */
 			$visittime = date_create_from_format('Y-m-d H:i:s', $visits[$key]['moment'], new DateTimeZone("UTC"));
 			$visittime->setTimezone(Config::$time_zone);
 			$visittimeStr = $visittime->format(Config::$time_format);

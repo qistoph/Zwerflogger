@@ -22,7 +22,7 @@ class Config {
 		self::$QR_baseURL = sprintf('%s://%s%s/',
 			empty($_SERVER['HTTPS']) ? 'http' : 'https',
 			$_SERVER['HTTP_HOST'],
-			dirname(explode('?', $_SERVER['REQUEST_URI'], 2)[0]));
+			preg_replace('/\/*$/', '', dirname(explode('?', $_SERVER['REQUEST_URI'], 2)[0])));
 	}
 
 	static $db_file;

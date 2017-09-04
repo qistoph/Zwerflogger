@@ -215,6 +215,68 @@ function print_visits() {
 	print "</table>";
 }
 
+function print_ranking() {
+	global $db;
+
+	$stmt = $db->prepare('
+		SELECT name, teamid, IFNULL(SUM(beacons.score), 0) AS score, firstLogins.moment AS logintime, lastVisits.tag AS lastbeacon
+		FROM teams
+		LEFT JOIN visits ON teams.teamid = visits.team
+		LEFT JOIN beacons ON beacons.beaconid = visits.beacon
+		LEFT JOIN (
+		  SELECT loginsL.team, loginsL.moment
+		  FROM logins loginsL
+		  LEFT JOIN logins loginsR
+			ON loginsL.team = loginsR.team
+			AND loginsL.moment > loginsR.moment
+		  WHERE loginsR.team IS NULL
+		) firstLogins ON firstLogins.team = teams.teamid
+		LEFT JOIN (
+		  SELECT visitsL.team, beacons.tag
+		  FROM visits visitsL
+		  LEFT JOIN visits visitsR
+			ON visitsL.team = visitsR.team
+			AND visitsL.moment < visitsR.moment
+		  LEFT JOIN beacons
+			ON visitsL.beacon = beacons.beaconid
+		  WHERE visitsR.team is NULL
+		) lastVisits ON lastVisits.team = teams.teamid
+		GROUP BY teams.name
+		ORDER BY COUNT(*) DESC;');
+	$result = $stmt->execute();
+
+	print '<table class="table table-striped table-hover">
+				<tr>
+					<th>Rank</th>
+					<th>Team</th>
+					<th>Score</th>
+					<th>Start time</th>
+					<th>Last beacon</th>
+				</tr>'."\n";
+
+	$rankNr = 1;
+	while(($rank = $result->fetchArray()) !== FALSE) {
+		$class = '';
+
+		if(isset($_SESSION['teamid']) && $rank['teamid'] == $_SESSION['teamid']) {
+			$class = 'class="myteam info"';
+		}
+
+		$logintimeStr = '';
+		if($rank['logintime'] != '') {
+			print_r($rank['logintime'] == '');
+			$logintime = date_create_from_format('Y-m-d H:i:s', $rank['logintime'], new DateTimeZone("UTC"));
+			$logintime->setTimezone(Config::$time_zone);
+			$logintimeStr = $logintime->format(Config::$time_format);
+		}
+		printf("<tr %s><td>%d.</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>\n", $class, $rankNr, $rank['name'], $rank['score'], $logintimeStr, $rank['lastbeacon']);
+
+		$rankNr++;
+	}
+
+	print "</table>\n";
+}
+
 if(isset($_GET['action'])) {
 	if($_GET['action'] == 'login') {
 		$teamid = $_GET['loginid'];
@@ -248,6 +310,10 @@ if(isset($_GET['beacon'])) {
 	}
 }
 
+if(Config::$show_ranking && is_logged_in() or Config::$show_ranking === 2) {
+	$show_ranking = true;
+}
+
 ?>
 <!doctype html>
 <html>
@@ -268,7 +334,7 @@ if(isset($_GET['beacon'])) {
 	<!-- Latest compiled and minified JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-	<title>Cyberzwerftocht 2017</title>
+<title><?=Config::$title?></title>
 
 	<link rel="stylesheet" href="zwerfstyle.css">
 </head>
@@ -276,7 +342,7 @@ if(isset($_GET['beacon'])) {
 
 		<ul class="navbar navbar-default">
 			<div class="navbar-brand">
-				Cyberzwerftocht 2017
+				<?=Config::$title?>
 			</div>
 <?php
 if(is_logged_in()) {
@@ -312,6 +378,16 @@ if($show_login_dialog) {
 				</div>
 			</div>
 		</div>
+<?php
+}
+
+if($show_ranking) {
+?>
+		<div class="row">
+			<b>Rankings:</b>
+			<?php print_ranking(); ?>
+		</div>
+
 <?php
 }
 

@@ -2,11 +2,13 @@
 
 class Config {
 	static function init() {
+		self::$title = 'Zwerflogger';
 		self::$db_file = '../data/zwerfdata.db'; // Relative to web folder (or absolute)
 		self::$session_name = ''; // Can use used to handle multiple instances
 		self::$secure_cookies = true; // Only set true if using HTTPS
 		self::$qrlib_path = '/usr/share/phpqrcode/qrlib.php'; // Absolute, or
 		//self::$qrlib_path = '../lib/phpqrcode/qrlib.php';  // Relative to web folder
+		self::$show_ranking = 0; // 0 = off, 1 = after login, 2 = main page and after login
 
 		self::$hide_secret = ''; // Use your own random secret here
 
@@ -25,10 +27,12 @@ class Config {
 			preg_replace('/\/*$/', '', dirname(explode('?', $_SERVER['REQUEST_URI'], 2)[0])));
 	}
 
+	static $title;
 	static $db_file;
 	static $session_name;
 	static $secure_cookies;
 	static $qrlib_path;
+	static $show_ranking;
 	static $hide_secret;
 	static $time_zone;
 	static $datetime_format;

@@ -21,7 +21,7 @@ if(!isset($_REQUEST['hide']) or $_REQUEST['hide'] != Config::$hide_secret) {
 <!doctype html>
 <html>
 <head>
-	<title>Cyberzwerftoch - Welcome</title>
+	<title><?=Config::$title?> - Welcome</title>
 
 	<style>
 	html,body {
@@ -64,7 +64,7 @@ while(($team = $result->fetchArray()) !== FALSE) {
 $stmt = $db->prepare('SELECT beaconid, tag FROM beacons');
 $result = $stmt->execute();
 while(($beacon = $result->fetchArray()) !== FALSE) {
-	printf('<div class="card"><h1>Cyberzwerftocht</h1><img src="qr.php?field=beacon&value=%1$s" title="%2$s"><br>%3$s<br></div>', $beacon['beaconid'], url_for_field('beacon', $beacon['beaconid']), $beacon['tag']);
+	printf('<div class="card"><h1>%1$s</h1><img src="qr.php?field=beacon&value=%2$s" title="%3$s"><br>%4$s<br></div>', Config::$title, $beacon['beaconid'], url_for_field('beacon', $beacon['beaconid']), $beacon['tag']);
 }
 ?>
 

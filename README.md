@@ -1,4 +1,5 @@
-# Cyberzwerftocht
+# Zwerflogger
+Ideas and concept by: Kas C, [Pieter1024](https://github.com/pieter1024) and Chris van Marle
 
 ## Requirements
 * phpqrcode

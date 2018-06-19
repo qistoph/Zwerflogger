@@ -187,7 +187,7 @@ function get_progress() {
 		throw new Exception("get_progress requires logged in team");
 	}
 
-	$stmt = $db->prepare('SELECT CAST(COUNT(team) AS FLOAT) / COUNT(*) AS progress FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid WHERE visits.team = :teamid OR visits.beacon IS NULL');
+	$stmt = $db->prepare('SELECT CAST(COUNT(team) AS FLOAT) / COUNT(*) AS progress FROM beacons LEFT JOIN visits ON visits.beacon = beacons.beaconid AND visits.team = :teamid;');
 	$stmt->bindValue(':teamid', $_SESSION['teamid'], SQLITE3_TEXT);
 	$result = $stmt->execute();
 
